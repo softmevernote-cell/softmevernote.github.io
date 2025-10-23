@@ -1,0 +1,431 @@
+<!DOCTYPE HTML>
+<html lang="ko">
+
+<head>
+    <title> OTKE </title>
+    <meta charset="utf-8">
+<!--
+<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width">
+-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="Author" content="">
+    <meta name="Keywords" content="OTKE">
+    <meta name="Description" content="OTKE">
+
+    <script language="javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+
+    <script language="javascript" src="https://momentjs.com/downloads/moment.js"></script>
+    <script language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+
+    <script language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/js/bootstrap-multiselect.min.js"></script>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.43/css/bootstrap-datetimepicker.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css">
+
+<!--
+    <script language="javascript" src="http://172.28.74.41:8083/contract/resource/bootstrap-multiselect.js"></script>
+    <link rel="stylesheet" href="http://172.28.74.41:8083/contract/resource/bootstrap-multiselect.css">
+-->
+
+	  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/free-jqgrid/4.15.5/css/ui.jqgrid.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/free-jqgrid/4.15.5/jquery.jqgrid.min.js"></script>
+
+
+	  <link rel="stylesheet" href="http://www.guriddo.net/demo/css/trirand/ui.jqgrid-bootstrap.css">
+
+    <script type="text/javascript" src="http://rawgit.com/vitmalina/w2ui/master/dist/w2ui.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="http://rawgit.com/vitmalina/w2ui/master/dist/w2ui.min.css" />
+
+    <style>
+        /* Style the navigation menu */
+
+        .topnav {
+            overflow: hidden;
+            background-color: #333;
+            position: relative;
+        }
+        /* Hide the links inside the navigation menu (except for logo/home) */
+
+        .topnav #myLinks {
+            display: none;
+        }
+        /* Style navigation menu links */
+
+        .topnav a {
+            color: white;
+            padding: 14px 16px;
+            text-decoration: none;
+            font-size: 17px;
+            display: block;
+        }
+        /* Style the hamburger menu */
+
+        .topnav a.icon {
+            background: black;
+            display: block;
+            position: absolute;
+            right: 0;
+            top: 0;
+        }
+        /* Add a grey background color on mouse-over */
+
+        .topnav a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+        /* Style the active link (or home/logo) */
+
+        .active {
+            background-color: #2e6da4;
+            color: white;
+        }
+
+    		td {
+    		   font-size:11pt;
+    		   font-family: "Helvetica Neue",Helvetica,Arial,sans-serif !important;
+    		}
+
+        div.w2ui-col-header {
+            text-align:center;
+            font-size:10pt;
+        	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif !important;
+        }
+        /*
+        .w2ui-grid .w2ui-grid-body div.w2ui-col-header {
+          height: auto !important;
+          width: 100%;
+          overflow: hidden;
+          padding-right: 10px !important;
+
+        }
+        */
+        .w2ui-grid .w2ui-grid-data div  {
+           font-size:10pt !important;
+           font-family: "Helvetica Neue",Helvetica,Arial,sans-serif !important;
+        }
+    </style>
+
+    <style>
+        .oek_datepicker {
+            display: inline-block
+        }
+/*
+.todate::before {
+  content: "~";
+}
+*/
+        .container {
+            margin: 0px;
+        }
+
+        .row {
+            margin-top: 5px;
+        }
+
+        .datepick input {
+            padding:4px
+        }
+        .form_el {
+            padding:2px;
+            padding-right:15px;
+        }
+    </style>
+
+    <script>
+        /* Toggle between showing and hiding the navigation menu links when the user clicks on the hamburger menu / bar icon */
+        function myFunction() {
+            var x = document.getElementById("myLinks");
+            if (x.style.display === "block") {
+                x.style.display = "none";
+            } else {
+                x.style.display = "block";
+            }
+        }
+
+        $(document).ready(function() {
+            $('.datepick').datetimepicker({
+                format: 'YYYY.MM.DD',
+                ignoreReadonly: true,
+                locale: 'ru'
+            });
+
+            console.info($(".fromdate").data("datetimepicker"));
+            console.info($("#fromdate").val(moment().format("YYYY.MM.DD")));
+            console.info($("#todate").val(moment().add(5, 'days').format("YYYY.MM.DD")));
+            $('#win_status').multiselect({
+                  selectAllText: "전체선택"
+                , nonSelectedText: "전체선택"
+                , buttonWidth: '150px'
+                , includeSelectAllOption: true
+                , enableFiltering: true
+            });
+            var winStatus = [
+                {label: '확인중', title: '확인중 1', value: '1', selected: true},
+                {label: '유효견적', title: '유효견적 2', value: '2'},
+                {label: '기간만료', title: '기간만료 3', value: '3', selected: true},
+                {label: '등록반려', title: '등록반려 4', value: '4'},
+                {label: 'WIN', title: 'WIN 5', value: '5'},
+                {label: 'LOST', title: 'LOST 6', value: '6', disabled: true},
+                {label: 'CANCEL', title: 'CANCEL 7', value: '7', disabled: true}
+            ];
+            $('#win_status').multiselect('dataprovider', winStatus);
+
+            $( "body" ).on( "click", ".search", function() {
+              debugger;
+              console.log( $( this ).val() );
+            });
+
+
+            $("#jqGrid").jqGrid({
+                url: 'http://trirand.com/blog/phpjqgrid/examples/jsonp/getjsonp.php?callback=?&qwery=longorders',
+                mtype: "GET",
+   			styleUI : 'Bootstrap',
+                datatype: "jsonp",
+                colModel: [
+                    { label: 'OrderID', name: 'OrderID', key: true, width: 75 },
+                    { label: 'Customer ID', name: 'CustomerID', width: 150 },
+                    { label: 'Order Date', name: 'OrderDate', width: 150 },
+                    { label: 'Freight', name: 'Freight', width: 150 },
+                    { label:'Ship Name', name: 'ShipName', width: 150 }
+                ],
+   			viewrecords: true,
+                height: 250,
+                rowNum: 20,
+                pager: "#jqGridPager"
+            });
+
+        });
+    </script>
+</head>
+
+<body>
+    <!-- Top Navigation Menu -->
+    <div class="topnav">
+        <a href="#home" class="active">견적수요 시스템</a>
+        <!-- Navigation links (hidden by default) -->
+        <div id="myLinks">
+          <a href="test.html">견적수요 조회</a>
+          <a href="#contact">견적수요 등록</a>
+          <a href="#about">일정공유</a>
+          <a href="login.html">로그인</a>
+        </div>
+        <!-- "Hamburger menu" / "Bar icon" to toggle the navigation links -->
+        <a href="javascript:void(0);" class="icon" onclick="myFunction()">
+            <i class="fa fa-bars"></i>
+        </a>
+    </div>
+
+<!--
+ xs (phones), sm (tablets), md (desktops), and lg (larger desktops)
+-->
+    <div class="container">
+        <div class="row">
+            <label class="control-label col-xs-3" for="inst_address">조회일자</label>
+            <div class="col-xs-9 col form_el">
+                <table>
+                    <td>
+                        <div class="input-group datepick fromdate">
+                            <input type="text" class="form-control" name="fromdate" id="fromdate" required="" maxlength="10">
+                            <div class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                            </div>
+                        </div>
+                    </td>
+                    <td width="10" align="center">~
+                    </td>
+                    <td>
+                        <div class="input-group datepick todate">
+                            <input type="text" class="form-control" name="todate" id="todate" required="" maxlength="10">
+                            <div class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                            </div>
+                        </div>
+                    </td>
+                </table>
+            </div>
+        </div>
+
+        <div class="row">
+            <label class="control-label col-xs-3" for="inst_address">현장주소(일반)</label>
+            <div class="col-xs-9 col form_el">
+                <input class="form-control" type="text" id="inst_address" name="inst_address" value="" maxlength="30">
+            </div>
+        </div>
+
+        <div class="row">
+            <label class="control-label col-xs-3" for="inst_address">현장주소(택지)</label>
+            <div class="col-xs-9 col form_el">
+                <input class="form-control" type="text" id="inst_address" name="inst_address" value="" maxlength="30">
+            </div>
+        </div>
+
+        <div class="row">
+            <label class="control-label col-xs-3" for="inst_address">견적상태</label>
+            <div class="col-xs-6 col form_el">
+
+              <select class="form-control" id="win_status" name="win_status[]" multiple="multiple">
+    						<option value="확인중">확인중</option>
+    						<option value="유효견적">유효견적</option>
+    						<option value="기간만료">기간만료</option>
+    						<option value="등록반려">등록반려</option>
+    						<option value="WIN">WIN</option>
+    						<option value="LOST">LOST</option>
+    						<option value="CANCEL">CANCEL</option>
+              </select>
+
+                </div>
+                <div class="col-xs-3 col text-right form_el">
+<input class="btn btn-primary search" type="submit" value="조회">
+                </div>
+            </div>
+
+<div class="row text-right form_el">
+  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+  <input class="btn btn-primary" type="button" value="Alert" onclick='swal("Hello world!");'>
+  <input class="btn btn-primary" type="button" value="Confirm" onclick='swal({
+  title: "Are you sure?",
+  text: "Once deleted, you will not be able to recover this imaginary file!",
+  icon: "warning",
+  buttons: true,
+  dangerMode: true,
+})
+.then((willDelete) => {
+  if (willDelete) {
+    swal("Poof! Your imaginary file has been deleted!", {
+      icon: "success",
+    });
+  } else {
+    swal("Your imaginary file is safe!");
+  }
+});'>
+<div>
+            <div class="row text-right form_el" style="margin-left: 5px;">
+<div id="w2uigrid1" style="width: 100%; height: 350px;"></div>
+            </div>
+<script type="text/javascript">
+            $(function () {
+                  $('#w2uigrid1').w2grid({
+                      name: 'w2uigrid1',
+                      show: { lineNumbers: true },
+                      show: {
+                          footer    : true,
+                          toolbar    : true
+                      },
+                      columns: [
+                          { field: 'userid', caption: 'ID', size: '50px', sortable: true, resizable: true },
+                          { field: 'fname', caption: 'First Name', size: '140px', sortable: true, searchable: 'text', resizable: true },
+                          { field: 'lname', caption: 'Last Name', size: '140px', sortable: true, searchable: 'text', resizable: true },
+                          { field: 'email', caption: 'Email', size: '100%', resizable: true, sortable: true },
+                          { field: 'manager', caption: 'Manager', size: '200px', resizable: true, sortable: true }
+                      ]
+                      ,
+                      records: [
+                          { recid: 1, fname: 'John', lname: 'Doe', email: 'jdoe@gmail.com', sdate: '1/3/2012' },
+                          { recid: 2, fname: 'Stuart', lname: 'Motzart', email: 'motzart@gmail.com', sdate: '4/3/2012' },
+                          { recid: 3, fname: 'Jin', lname: 'Franson', email: 'franson@gmail.com', sdate: '2/3/2012' },
+                          { recid: 4, fname: 'Frank', lname: 'Ottie', email: 'ottie@gmail.com', sdate: '4/3/2012' },
+                          { recid: 5, fname: 'Kelly', lname: 'Silver', email: 'ksilver@gmail.com', sdate: '5/3/2012' },
+                          { recid: 6, fname: 'Francis', lname: 'Gatos', email: 'fgotya@gmail.com', sdate: '4/4/2012' },
+                          { recid: 7, fname: 'Dimas', lname: 'Welldo', email: 'dimas@gmail.com', sdate: '7/3/2012' },
+                          { recid: 8, fname: 'Thomas', lname: 'Bahh', email: 'bahhtee@gmail.com', sdate: '4/3/2012' },
+                          { recid: 9, fname: 'Ottie', lname: 'Welldo', email: 'doe@gmail.com', sdate: '4/3/2012' },
+                          { recid: 10, fname: 'Thomas', lname: 'Bahh', email: 'jane@gmail.com', sdate: '9/4/2012' },
+                          { recid: 11, fname: 'Kolya', lname: 'Doe', email: 'follow@gmail.com', sdate: '4/3/2012' },
+                          { recid: 12, fname: 'Martha', lname: 'Motzart', email: 'joe@gmail.com', sdate: '4/3/2012' }
+                      ]
+                  });
+});
+</script>
+            <div class="row text-right form_el" style="margin-left: 5px;">
+<div id="w2uigrid2" style="width: 100%; height: 350px;"></div>
+            </div>
+<script type="text/javascript">
+$(function() {
+    w2utils.settings.RESTfull = true;
+    w2utils.settings.dataType = 'JSON';
+    //$("#f").seriales()
+    $('#w2uigrid2').w2grid({
+        name: 'w2uigrid2'
+        ,autoLoad: true,
+        limit: 30,
+        recordHeight: 30,
+        sortMode: 'local',
+        method: "POST",
+        url: "/Bbs/List",
+        postData: {
+            "w2uigrid": "Y",
+            "excelCount": "130",
+            "bbsNo": "",
+            "bbsId": "BBS0009",
+            "category1": "CATEGO08",
+            "category2": "",
+            "category3": "",
+            "keyword": "",
+            "query": "",
+            "pagePerReocrd": "30",
+            "currentPage": 1
+        },
+        onRequest: function(event) {
+            console.log('-- server call --');
+            console.log(event);
+            if (event.postData.cmd == "get")
+                this.postData.currentPage = event.postData.currentPage + 1;
+            // w2ui.grid.postData['myVar'] = 'value';
+            // debugger;
+        },
+
+        onLoad: function(target, data) {
+/*
+            debugger;
+            alert("hi");
+            var wui = [];
+            var response = [];
+            var zzz = (data.xhr.responseText);
+            response = zzz.match(/{.*(.*)\}/);
+            var p = response[0];
+            var data = JSON.parse(p);
+            debugger;
+            //w2ui["w2uigrid2"].total = w2ui["w2uigrid2"].records.length;
+            //w2ui.grid1.records.push(s);
+            console.log(s);
+*/
+            }
+/*
+       ,parser: function (responseText) {
+            debugger;
+            var data = $.parseJSON(responseText);
+            // do other things
+            //alert( data.total );
+            w2ui['w2uigrid2'].total = data.total;
+            console.info("w2ui['w2uigrid2'].total", w2ui['w2uigrid2'].total);
+            return data.list;
+            },
+*/
+        ,show: {
+            footer: true,
+            toolbar: false
+        },
+        columns: [
+              { field: 'bbsNo', caption: 'ID', size: '50px', sortable: false, resizable: true, attr: "align=center" },
+              { field: 'bbsTitle', caption: '제목', size: '100%', resizable: true, sortable: false, attr: "align=left" },
+              { field: 'registerName', caption: '등록자', size: '80px', resizable: true, sortable: false, attr: "align=center" }
+        ]
+    });
+});
+</script>
+        </div>
+
+
+
+</body>
+
+
+
+
+</html>
