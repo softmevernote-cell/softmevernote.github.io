@@ -50,7 +50,6 @@
         });
 
         function showFileContent(index) {
-            debugger;
             const contentDiv = document.getElementById('content');
             contentDiv.innerHTML = '';
             const fileData = filesData[index];
@@ -69,7 +68,6 @@
             contentDiv.appendChild(otherFilesHeader);
 
             const otherFilesList = document.createElement('ul');
-            otherFilesList.id = 'other-files-list';
             fileData.files.forEach(file => {
                 if (file === fileData.html_file.substring(fileData.folder.length + 1)) {
                     return;
@@ -102,7 +100,6 @@
                 otherFilesList.appendChild(li);
             });
             contentDiv.appendChild(otherFilesList);
-            searchFiles(); // Re-apply search filter
         }
 
         function searchFiles() {
@@ -120,23 +117,6 @@
                         li[i].style.display = "";
                     } else {
                         li[i].style.display = "none";
-                    }
-                }
-            }
-
-            const otherFilesUl = document.getElementById('other-files-list');
-            if (otherFilesUl) {
-                const otherLi = otherFilesUl.getElementsByTagName('li');
-                for (let i = 0; i < otherLi.length; i++) {
-                    if (filter === "") {
-                        otherLi[i].style.display = "";
-                    } else {
-                        const txtValue = otherLi[i].textContent || otherLi[i].innerText;
-                        if (txtValue.toLowerCase().indexOf(filter) > -1) {
-                            otherLi[i].style.display = "";
-                        } else {
-                            otherLi[i].style.display = "none";
-                        }
                     }
                 }
             }
