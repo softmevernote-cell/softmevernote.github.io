@@ -16,14 +16,7 @@
         a:hover { text-decoration: underline; }
         img { max-width: 100%; height: auto; }
         #searchInput { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; }
-        #other-files-list {
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid #eee;
-            padding: 10px;
-        }
     </style>
-    <link rel="stylesheet" href="/lib/baguetteBox/baguetteBox.min.css">
 </head>
 <body>
     <div class="container">
@@ -57,7 +50,6 @@
         });
 
         function showFileContent(index) {
-            debugger;
             const contentDiv = document.getElementById('content');
             contentDiv.innerHTML = '';
             const fileData = filesData[index];
@@ -67,8 +59,7 @@
             iframe.style.width = '100%';
             iframe.style.height = '400px';
             iframe.style.border = '1px solid #ccc';
-            const rawSrc = fileData.html_file.startsWith('./') ? fileData.html_file.substring(2) : fileData.html_file;
-            iframe.src = encodeURI(rawSrc);
+            iframe.src = encodeURI(fileData.html_file);
             contentDiv.appendChild(iframe);
 
             // Display other files in the folder
@@ -77,24 +68,17 @@
             contentDiv.appendChild(otherFilesHeader);
 
             const otherFilesList = document.createElement('ul');
-            otherFilesList.id = 'other-files-list';
-            otherFilesList.className = 'gallery'; // Add class for baguetteBox
             fileData.files.forEach(file => {
                 if (file === fileData.html_file.substring(fileData.folder.length + 1)) {
                     return;
                 }
                 const li = document.createElement('li');
-                const rawFilePath = (fileData.folder + '/' + file).startsWith('./') ? (fileData.folder + '/' + file).substring(2) : (fileData.folder + '/' + file);
-                const filePath = encodeURI(rawFilePath);
+                const filePath = encodeURI(fileData.folder + '/' + file);
                 
                 if (file.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-                    const link = document.createElement('a');
-                    link.href = filePath;
-                    link.setAttribute('data-caption', file);
                     const img = document.createElement('img');
                     img.src = filePath;
-                    link.appendChild(img);
-                    li.appendChild(link);
+                    li.appendChild(img);
                 } else if (file.match(/\.(mp4|webm|ogg)$/i)) {
                     const video = document.createElement('embed');
                     video.src = filePath;
@@ -108,30 +92,14 @@
                     audio.width = '100%';
                     li.appendChild(audio);
                 } else {
-                    li.textContent = file;
-                    li.style.cursor = 'pointer';
-                    li.onclick = () => {
-                        const targetPath = (fileData.folder + '/' + file);
-                        const newIndex = filesData.findIndex(item => item.html_file === targetPath);
-                        if (newIndex !== -1) {
-                            showFileContent(newIndex);
-                        }
-                        else {
-                            console.error('File not found in filesData:', targetPath);
-                        }
-                    };
+                    const link = document.createElement('a');
+                    link.href = filePath;
+                    link.textContent = file;
+                    li.appendChild(link);
                 }
                 otherFilesList.appendChild(li);
             });
             contentDiv.appendChild(otherFilesList);
-            searchFiles(); // Re-apply search filter
-
-            if (typeof baguetteBox !== 'undefined') {
-                baguetteBox.run('.gallery', {
-                    captions: true,
-                    async: true
-                });
-            }
         }
 
         function searchFiles() {
@@ -152,25 +120,7 @@
                     }
                 }
             }
-
-            const otherFilesUl = document.getElementById('other-files-list');
-            if (otherFilesUl) {
-                const otherLi = otherFilesUl.getElementsByTagName('li');
-                for (let i = 0; i < otherLi.length; i++) {
-                    if (filter === "") {
-                        otherLi[i].style.display = "";
-                    } else {
-                        const txtValue = otherLi[i].textContent || otherLi[i].innerText;
-                        if (txtValue.toLowerCase().indexOf(filter) > -1) {
-                            otherLi[i].style.display = "";
-                        } else {
-                            otherLi[i].style.display = "none";
-                        }
-                    }
-                }
-            }
         }
     </script>
-    <script src="/lib/baguetteBox/baguetteBox.min.js" async></script>
 </body>
 </html>
