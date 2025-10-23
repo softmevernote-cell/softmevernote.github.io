@@ -42,7 +42,7 @@
                     const fileList = document.getElementById('files');
                     filesData.forEach((fileData, index) => {
                         const li = document.createElement('li');
-                        li.textContent = fileData.html_file.replace("./", "");
+                        li.textContent = fileData.html_file;
                         li.onclick = () => showFileContent(index);
                         fileList.appendChild(li);
                     });
