@@ -1,0 +1,24 @@
+<package>
+<job>
+<script language="JScript" src="common.js"></script>
+<script language="JScript">
+/*
+    id : HKEY_CLASSES_ROOT\regedit\WebLogin
+    pw : HKEY_CLASSES_ROOT\regedit\WebPass
+*/
+var useName="";
+var usePass="";
+try {
+    useName=regget("HKEY_CLASSES_ROOT\\regedit\\WebLogin");
+    usePass=regget("HKEY_CLASSES_ROOT\\regedit\\WebPass");
+    //WshShell.Run("iexplore.exe -new http://www.daum.net", 0, false);
+    var oIE = WScript.CreateObject("InternetExplorer.Application");
+    oIE.navigate(_URL + '?useName=' + useName + '&usePass=' + usePass);
+    oIE.visible = 1 ;
+} catch (e) {}
+if  (useName == "" || usePass == "" ) {
+    MsgBox("레지스트리값이 없습니다.");
+}
+</script>
+</job>
+</package>

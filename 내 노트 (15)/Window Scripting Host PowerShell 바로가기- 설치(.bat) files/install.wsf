@@ -1,0 +1,48 @@
+<package>
+<job>
+<script language="JScript" src="common.js"></script>
+<script language="JScript">
+/*
+    if (!fso.FolderExists(backBase + "\\" + yyyymm)) {
+        fso.CreateFolder(backBase + "\\" + yyyymm);
+    }
+
+    MoveFile(fc.item(), backBase + "\\" + yyyymm + "\\" + fStr );
+*/
+    //MsgBox(WScript.path.split('\\')[0]);
+    if (!fso.FolderExists(_INSTALL_DIR)) {
+        fso.CreateFolder(_INSTALL_DIR);
+    } else {
+    }
+
+    var f, fc, s;
+    f = fso.GetFolder(WshShell.CurrentDirectory);
+    fc = new Enumerator(f.files);
+    s = "";
+
+    for (; !fc.atEnd(); fc.moveNext()) {
+        //MsgBox( fStr= fc.item() );
+        if ("install.bat" != fc.item().name && "install.wsf" != fc.item().name  ) {
+            CopyFile(fc.item(), _INSTALL_DIR + "\\" + fc.item().name );
+        }
+    }
+
+    strDesktop = WshShell.SpecialFolders("Desktop");
+    var oShellLink = WshShell.CreateShortcut(strDesktop + "\\PizzaHut.lnk");
+    //MsgBox( WScript.ScriptFullName );
+    oShellLink.TargetPath = _INSTALL_DIR + "//" + "go.wsf";
+    //oShellLink.TargetPath = "execute.wsf";
+    oShellLink.WindowStyle = 1;
+    oShellLink.Hotkey = "CTRL+SHIFT+F";
+    oShellLink.IconLocation = "notepad.exe, 0";
+    oShellLink.Description = "PizzaHut";
+    oShellLink.WorkingDirectory = strDesktop;
+    oShellLink.Save();
+    var oUrlLink = WshShell.CreateShortcut(strDesktop + "\\Microsoft Web Site.url");
+    //oUrlLink.TargetPath = "execute.wsf //job:exec";
+    oUrlLink.Save();
+    MsgBox("설치가 완료되었습니다.\n바로가기 아이콘이 생성되었습니다.");
+/**/
+</script>
+</job>
+</package>
