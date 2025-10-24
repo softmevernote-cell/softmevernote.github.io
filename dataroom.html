@@ -155,7 +155,8 @@
                             htmlFileLink.href = 'javascript:void(0);';
                             htmlFileLink.textContent = fileData.html_file;
                             htmlFileLink.onclick = () => {
-                                modalIframe.src = `index.html?htmlFile=${encodeURIComponent(fileData.html_file)}`;
+                                const searchQuery = fileData.html_file.replace('.html', '').replace(/[^a-zA-Z0-9가-힣]/g, ' ');
+                                modalIframe.src = `index.html?search=${encodeURIComponent(searchQuery)}`;
                                 modal.style.display = "block";
                             };
                             const htmlFileSpan = document.createElement('span');
