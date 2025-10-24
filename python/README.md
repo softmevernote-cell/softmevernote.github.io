@@ -27,3 +27,4 @@ This will generate or overwrite `attach_file.json` in the project root.
 ---
 
 **Note:** These scripts are designed to be run from the root directory of the project (`/Users/softm/Work/softmevernote.github.io`).
+서해박속낙지 어리굴젓  굴원산지
