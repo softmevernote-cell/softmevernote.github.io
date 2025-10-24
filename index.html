@@ -5,6 +5,8 @@
     <title>내 노트</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; margin: 0; }
+        nav { background-color: #f8f9fa; padding: 10px 20px; border-bottom: 1px solid #ccc; }
+        nav a { margin-right: 15px; text-decoration: none; color: #0366d6; font-weight: bold; }
         .container { display: flex; height: 100vh; }
         #file-list { width: 350px; border-right: 1px solid #ccc; padding: 20px; overflow-y: auto; }
         #file-content { flex-grow: 1; padding: 20px; overflow-y: auto; }
@@ -37,12 +39,35 @@
             font-size: 24px;
             margin-right: 10px;
         }
+        #scrollTopBtn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            z-index: 99;
+            border: none;
+            outline: none;
+            background-color: #0366d6;
+            color: white;
+            cursor: pointer;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 18px;
+        }
+
+        #scrollTopBtn:hover {
+            background-color: #0056b3;
+        }
     </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/css/lightgallery.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/css/lg-video.min.css">
     <link href="https://cdn.jsdelivr.net/npm/file-icon-vectors@latest/file-icon-vectors.min.css" rel="stylesheet">
 </head>
 <body>
+    <nav>
+        <a href="index.html">메인</a>
+        <a href="dataroom.html">자료실</a>
+    </nav>
     <div class="container">
         <div id="file-list">
             <h1>내 노트</h1>
@@ -70,6 +95,24 @@
                         li.onclick = () => showFileContent(index);
                         fileList.appendChild(li);
                     });
+
+                    // Check for search URL parameter
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const searchQuery = urlParams.get('search');
+                    if (searchQuery) {
+                        const searchInput = document.getElementById('searchInput');
+                        searchInput.value = decodeURIComponent(searchQuery);
+                        searchFiles();
+                    } else {
+                        // Check for htmlFile URL parameter for backward compatibility
+                        const htmlFile = urlParams.get('htmlFile');
+                        if (htmlFile) {
+                            const index = filesData.findIndex(file => file.html_file === htmlFile);
+                            if (index !== -1) {
+                                showFileContent(index);
+                            }
+                        }
+                    }
                 });
         });
 
@@ -149,24 +192,50 @@
         function searchFiles() {
             const input = document.getElementById('searchInput');
             const filter = input.value.toLowerCase();
+            const keywords = filter.split(' ').filter(k => k);
             const ul = document.getElementById('files');
             const li = ul.getElementsByTagName('li');
 
             for (let i = 0; i < li.length; i++) {
-                if (filter === "") {
-                    li[i].style.display = "";
+                const txtValue = li[i].textContent || li[i].innerText;
+                let match = false;
+                if (keywords.length === 0) {
+                    match = true;
                 } else {
-                    const txtValue = li[i].textContent || li[i].innerText;
-                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
-                        li[i].style.display = "";
-                    } else {
-                        li[i].style.display = "none";
+                    for (const keyword of keywords) {
+                        if (txtValue.toLowerCase().includes(keyword)) {
+                            match = true;
+                            break;
+                        }
                     }
                 }
+
+                if (match) {
+                    li[i].style.display = "";
+                } else {
+                    li[i].style.display = "none";
+                }
             }
+        }
+
+        window.onscroll = function() {scrollFunction()};
+
+        function scrollFunction() {
+            const scrollTopBtn = document.getElementById("scrollTopBtn");
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                scrollTopBtn.style.display = "block";
+            } else {
+                scrollTopBtn.style.display = "none";
+            }
+        }
+
+        function scrollToTop() {
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/lightgallery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/plugins/video/lg-video.min.js"></script>
+    <button onclick="scrollToTop()" id="scrollTopBtn" title="Go to top">Top</button>
 </body>
 </html>

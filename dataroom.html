@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>자료실</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; margin: 0; }
+        nav { background-color: #f8f9fa; padding: 10px 20px; border-bottom: 1px solid #ccc; }
+        nav a { margin-right: 15px; text-decoration: none; color: #0366d6; font-weight: bold; }
+        .container { padding: 20px; }
+        #searchInput { width: 100%; padding: 8px; margin-bottom: 20px; box-sizing: border-box; }
+        #file-list { list-style-type: none; padding-left: 0; }
+        #file-list li { display: flex; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        #file-list img, #file-list .fiv-cla { width: 80px; height: 80px; object-fit: cover; margin-right: 15px; }
+        .file-info { display: flex; flex-direction: column; }
+        .file-info .html-file { font-size: 0.9em; color: #586069; }
+        .file-info .attach-file { font-weight: bold; }
+        #scrollTopBtn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            z-index: 99;
+            border: none;
+            outline: none;
+            background-color: #0366d6;
+            color: white;
+            cursor: pointer;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 18px;
+        }
+
+        #scrollTopBtn:hover {
+            background-color: #0056b3;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            height: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/css/lightgallery.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/css/lg-video.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/file-icon-vectors@latest/file-icon-vectors.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav>
+        <a href="index.html">메인</a>
+        <a href="dataroom.html">자료실</a>
+    </nav>
+    <div class="container">
+        <h1>자료실</h1>
+        <input type="text" id="searchInput" placeholder="첨부 파일명 검색...">
+        <ul id="file-list"></ul>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/lightgallery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/plugins/video/lg-video.min.js"></script>
+    <button onclick="scrollToTop()" id="scrollTopBtn" title="Go to top">Top</button>
+    <div id="myModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <iframe id="modal-iframe" style="width:100%; height:95%; border:none;"></iframe>
+      </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const fileList = document.getElementById('file-list');
+            const searchInput = document.getElementById('searchInput');
+            const galleryContainer = document.createElement('div');
+            galleryContainer.id = 'lightgallery-container';
+            galleryContainer.style.display = 'none';
+            document.body.appendChild(galleryContainer);
+
+            const modal = document.getElementById("myModal");
+            const modalIframe = document.getElementById("modal-iframe");
+            const closeModal = document.getElementsByClassName("close")[0];
+
+            closeModal.onclick = function() {
+                modal.style.display = "none";
+                modalIframe.src = "";
+            }
+
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                    modalIframe.src = "";
+                }
+            }
+
+            let allFiles = [];
+
+            fetch('attach_file.json')
+                .then(response => response.json())
+                .then(data => {
+                    for (const htmlFile in data) {
+                        const attachments = data[htmlFile];
+                        attachments.files.forEach(file => {
+                            allFiles.push({
+                                html_file: htmlFile,
+                                filename: file
+                            });
+                        });
+                    }
+
+                    const galleryItems = allFiles
+                        .filter(f => ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'webm'].includes(f.filename.split('.').pop().toLowerCase()))
+                        .map(f => ({'src': encodeURI(f.html_file.replace('.html', ' files/') + f.filename)}));
+                    
+                    const lg = lightGallery(galleryContainer, {
+                        dynamic: true,
+                        dynamicEl: galleryItems,
+                        plugins: [lgVideo]
+                    });
+
+                    function renderList(filesToRender) {
+                        fileList.innerHTML = '';
+                        filesToRender.forEach(fileData => {
+                            const li = document.createElement('li');
+                            const filePath = fileData.html_file.replace('.html', ' files/') + fileData.filename;
+                            const fileExt = fileData.filename.split('.').pop().toLowerCase();
+
+                            let thumbnail;
+                            const fileInfo = document.createElement('div');
+                            fileInfo.className = 'file-info';
+                            
+                            const htmlFileLink = document.createElement('a');
+                            htmlFileLink.href = 'javascript:void(0);';
+                            htmlFileLink.textContent = fileData.html_file;
+                            htmlFileLink.onclick = () => {
+                                modalIframe.src = `index.html?htmlFile=${encodeURIComponent(fileData.html_file)}`;
+                                modal.style.display = "block";
+                            };
+                            const htmlFileSpan = document.createElement('span');
+                            htmlFileSpan.className = 'html-file';
+                            htmlFileSpan.appendChild(htmlFileLink);
+
+                            const attachFileLink = document.createElement('a');
+                            attachFileLink.className = 'attach-file';
+                            attachFileLink.textContent = fileData.filename;
+                            
+                            if (['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'webm'].includes(fileExt)) {
+                                attachFileLink.href = 'javascript:void(0);';
+                                attachFileLink.dataset.src = encodeURI(filePath);
+                                attachFileLink.onclick = (e) => {
+                                    e.preventDefault();
+                                    const clickedSrc = e.target.dataset.src;
+                                    const galleryIndex = galleryItems.findIndex(item => item.src === clickedSrc);
+                                    if (galleryIndex !== -1) {
+                                        lg.openGallery(galleryIndex);
+                                    }
+                                };
+
+                                if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+                                    thumbnail = document.createElement('img');
+                                    thumbnail.src = encodeURI(filePath);
+                                } else {
+                                    thumbnail = document.createElement('img');
+                                    thumbnail.src = 'https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/images/video-play.png';
+                                }
+                            } else {
+                                thumbnail = document.createElement('span');
+                                thumbnail.className = `fiv-cla fiv-icon-${fileExt}`;
+                                attachFileLink.href = encodeURI(filePath);
+                                attachFileLink.download = fileData.filename;
+                            }
+                            
+                            li.appendChild(thumbnail);
+                            fileInfo.appendChild(htmlFileSpan);
+                            fileInfo.appendChild(attachFileLink);
+                            li.appendChild(fileInfo);
+                            fileList.appendChild(li);
+                        });
+                    }
+
+                    renderList(allFiles);
+
+                    searchInput.addEventListener('keyup', function() {
+                        const filter = searchInput.value.toLowerCase();
+                        const filteredFiles = allFiles.filter(fileData => {
+                            return fileData.filename.toLowerCase().includes(filter) || fileData.html_file.toLowerCase().includes(filter);
+                        });
+                        renderList(filteredFiles);
+                    });
+                });
+        });
+
+        window.onscroll = function() {scrollFunction()};
+
+        function scrollFunction() {
+            const scrollTopBtn = document.getElementById("scrollTopBtn");
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                scrollTopBtn.style.display = "block";
+            } else {
+                scrollTopBtn.style.display = "none";
+            }
+        }
+
+        function scrollToTop() {
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
+        }
+    </script>
+</body>
+</html>
