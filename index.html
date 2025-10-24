@@ -16,7 +16,16 @@
         a:hover { text-decoration: underline; }
         img { max-width: 100%; height: auto; }
         #searchInput { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; }
+        #lightgallery img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            margin: 5px;
+            cursor: pointer;
+        }
     </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/css/lightgallery.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/css/lg-video.min.css">
 </head>
 <body>
     <div class="container">
@@ -62,44 +71,37 @@
             iframe.src = encodeURI(fileData.html_file);
             contentDiv.appendChild(iframe);
 
-            // Display other files in the folder
-            const otherFilesHeader = document.createElement('h3');
-            otherFilesHeader.textContent = '폴더의 다른 파일';
-            contentDiv.appendChild(otherFilesHeader);
+            // Create gallery
+            fetch('attach_file.json')
+                .then(response => response.json())
+                .then(attachData => {
+                    if (attachData[fileData.html_file]) {
+                        const attachments = attachData[fileData.html_file];
+                        const galleryDiv = document.createElement('div');
+                        galleryDiv.id = 'lightgallery';
 
-            const otherFilesList = document.createElement('ul');
-            fileData.files.forEach(file => {
-                if (file === fileData.html_file.substring(fileData.folder.length + 1)) {
-                    return;
-                }
-                const li = document.createElement('li');
-                const filePath = encodeURI(fileData.folder + '/' + file);
-                
-                if (file.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-                    const img = document.createElement('img');
-                    img.src = filePath;
-                    li.appendChild(img);
-                } else if (file.match(/\.(mp4|webm|ogg)$/i)) {
-                    const video = document.createElement('embed');
-                    video.src = filePath;
-                    video.type = 'video/mp4';
-                    video.width = '100%';
-                    li.appendChild(video);
-                } else if (file.match(/\.(mp3|wav)$/i)) {
-                    const audio = document.createElement('embed');
-                    audio.src = filePath;
-                    audio.type = 'audio/mpeg';
-                    audio.width = '100%';
-                    li.appendChild(audio);
-                } else {
-                    const link = document.createElement('a');
-                    link.href = filePath;
-                    link.textContent = file;
-                    li.appendChild(link);
-                }
-                otherFilesList.appendChild(li);
-            });
-            contentDiv.appendChild(otherFilesList);
+                        attachments.files.forEach(file => {
+                            const a = document.createElement('a');
+                            const filePath = fileData.html_file.replace('.html', ' files/') + file;
+                            a.href = encodeURI(filePath);
+                            const img = document.createElement('img');
+                            // Use a generic image thumbnail for all files, or a video thumbnail for videos
+                            if (file.toLowerCase().endsWith('.mp4') || file.toLowerCase().endsWith('.mov')) {
+                                img.src = 'https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/images/video-play.png';
+                            } else {
+                                img.src = encodeURI(filePath); // Use the image itself as the thumbnail
+                            }
+                            a.appendChild(img);
+                            galleryDiv.appendChild(a);
+                        });
+
+                        contentDiv.appendChild(galleryDiv);
+
+                        lightGallery(galleryDiv, {
+                            plugins: [lgVideo],
+                        });
+                    }
+                });
         }
 
         function searchFiles() {
@@ -122,5 +124,7 @@
             }
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/lightgallery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/plugins/video/lg-video.min.js"></script>
 </body>
 </html>
