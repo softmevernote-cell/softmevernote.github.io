@@ -1,0 +1,112 @@
+Attribute VB_Name = "modCopyWork"
+'Global 변수
+Dim connDb As ADODB.Connection
+Dim userId As String
+
+Function OpenDbConnection()
+    userId = "test"
+    Set connDb = New ADODB.Connection
+    strCon = "DSN=work_sqlite;UID=;PWD="
+    'strCon = "DSN=mysql;UID=rood;PWD=1"
+    connDb.Open strCon
+    If connDb.State <> adStateOpen Then
+        MsgBox "전문관리DB 연결에 실패하였습니다."
+    End If
+End Function
+
+Function CloseDbConnection()
+    On Error Resume Next
+    connDb.Close
+    Set connDb = Nothing
+End Function
+ 
+Sub getTextFromDb()
+Attribute getTextFromDb.VB_ProcData.VB_Invoke_Func = "V\n14"
+
+    OpenDbConnection
+
+    numStdWords = 0
+    Set rs = connDb.Execute("select F01 from TB_TEMP_WORK WHERE USR_ID ='" & userId & "'")
+    Dim t As String
+    Dim idx As Integer
+    
+    While Not rs.EOF
+        If idx = 0 Then
+            t = t & rs.Fields(0)
+        Else
+            t = vbCrLf & t & rs.Fields(0)
+        End If
+        
+        rs.MoveNext
+        idx = idx + 1
+    Wend
+    'ActiveCell.Value = t
+    Selection.Value = t
+    CloseDbConnection
+    
+    'MsgBox numStdWords & " 개의 기본단어가 로드되었습니다."
+            
+End Sub
+
+
+Sub insertTextToDb()
+Attribute insertTextToDb.VB_ProcData.VB_Invoke_Func = "C\n14"
+    OpenDbConnection
+    'numStdWords = 0
+    connDb.Execute ("delete from TB_TEMP_WORK WHERE USR_ID ='" & userId & "'")
+    Dim rRng As Range
+    Dim rCell As Range
+    Set rRng = Selection
+    Dim v As String
+    Dim idx As Integer
+    Dim arr As Variant
+    Dim prevRow As String
+    Dim currRow As String
+    prevRow = ""
+    For Each rCell In rRng
+        Debug.Print rCell.Address, rCell.Value
+        arr = Split(rCell.Address, "$")
+        currRow = arr(2)
+        If idx = 0 Then
+            v = rCell.Value
+        Else
+            If prevRow <> currRow Then
+                If prevRow <> "" Then
+                    v = v & vbCrLf & rCell.Value
+                Else
+                    v = v & rCell.Value
+                End If
+            Else
+                v = v & vbTab & rCell.Value
+            End If
+        End If
+        prevRow = arr(2)
+        idx = idx + 1
+    Next rCell
+    'MsgBox v
+    connDb.Execute ("insert into TB_TEMP_WORK ( USR_ID, F01 ) VALUES ( '" & userId & "','" & v & "')")
+    CloseDbConnection
+    'MsgBox numStdWords & " 개의 기본단어가 로드되었습니다."
+
+
+End Sub
+
+Sub aaa()
+'    File_Create "C:\test.txt", ActiveCell.Value
+'MsgBox ActiveCell.Value
+
+' InputBox "test", "tesT", ActiveCell.Value
+
+End Sub
+Sub File_Create(ByVal sPathName As String, ByVal v As String)
+    Dim fs As Object, a As Object, i As Integer, s As String
+    Set fs = CreateObject("Scripting.FileSystemObject")
+    Set a = fs.CreateTextFile(sPathName, True)
+
+    a.WriteLine v
+    
+    a.Close '// 파일을 닫음
+    Set a = Nothing '// 개채형 변수는 사용하면 항상 변수를 초기화 해줍니다.
+    Set fs = Nothing '// 개채형 변수는 사용하면 항상 변수를 초기화 해줍니다.
+End Sub
+

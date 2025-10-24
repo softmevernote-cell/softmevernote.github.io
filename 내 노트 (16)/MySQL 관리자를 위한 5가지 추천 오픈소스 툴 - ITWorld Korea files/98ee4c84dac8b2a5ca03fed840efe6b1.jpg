@@ -1,0 +1,7 @@
+{
+  "responseResult" : {
+    "status" : "500",
+    "messageCode" : "NOT_PUBLISHABLE_URL",
+    "message" : "송고할 수 없는  URL입니다."
+  }
+}
