@@ -23,9 +23,24 @@
             margin: 5px;
             cursor: pointer;
         }
+        #download-links p {
+            margin: 10px 0;
+        }
+        #download-links a {
+            text-decoration: none;
+            color: #0366d6;
+        }
+        #download-links a:hover {
+            text-decoration: underline;
+        }
+        .fiv-cla {
+            font-size: 24px;
+            margin-right: 10px;
+        }
     </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/css/lightgallery.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/css/lg-video.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/file-icon-vectors@latest/file-icon-vectors.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -71,7 +86,7 @@
             iframe.src = encodeURI(fileData.html_file);
             contentDiv.appendChild(iframe);
 
-            // Create gallery
+            // Create gallery and download links
             fetch('attach_file.json')
                 .then(response => response.json())
                 .then(attachData => {
@@ -79,27 +94,54 @@
                         const attachments = attachData[fileData.html_file];
                         const galleryDiv = document.createElement('div');
                         galleryDiv.id = 'lightgallery';
+                        const downloadLinksDiv = document.createElement('div');
+                        downloadLinksDiv.id = 'download-links';
 
                         attachments.files.forEach(file => {
-                            const a = document.createElement('a');
                             const filePath = fileData.html_file.replace('.html', ' files/') + file;
-                            a.href = encodeURI(filePath);
-                            const img = document.createElement('img');
-                            // Use a generic image thumbnail for all files, or a video thumbnail for videos
-                            if (file.toLowerCase().endsWith('.mp4') || file.toLowerCase().endsWith('.mov')) {
+                            const fileExt = file.split('.').pop().toLowerCase();
+
+                            if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+                                // Image for lightGallery
+                                const a = document.createElement('a');
+                                a.href = encodeURI(filePath);
+                                const img = document.createElement('img');
+                                img.src = encodeURI(filePath);
+                                a.appendChild(img);
+                                galleryDiv.appendChild(a);
+                            } else if (['mp4', 'mov', 'webm'].includes(fileExt)) {
+                                // Video for lightGallery
+                                const a = document.createElement('a');
+                                a.href = encodeURI(filePath);
+                                const img = document.createElement('img');
                                 img.src = 'https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/images/video-play.png';
+                                a.appendChild(img);
+                                galleryDiv.appendChild(a);
                             } else {
-                                img.src = encodeURI(filePath); // Use the image itself as the thumbnail
+                                // Download link for other files
+                                const p = document.createElement('p');
+                                const a = document.createElement('a');
+                                a.href = encodeURI(filePath);
+                                a.download = file;
+                                const icon = document.createElement('span');
+                                icon.className = `fiv-cla fiv-icon-${fileExt}`;
+                                a.appendChild(icon);
+                                a.appendChild(document.createTextNode(` ${file}`));
+                                p.appendChild(a);
+                                downloadLinksDiv.appendChild(p);
                             }
-                            a.appendChild(img);
-                            galleryDiv.appendChild(a);
                         });
 
-                        contentDiv.appendChild(galleryDiv);
+                        if (galleryDiv.children.length > 0) {
+                            contentDiv.appendChild(galleryDiv);
+                            lightGallery(galleryDiv, {
+                                plugins: [lgVideo],
+                            });
+                        }
 
-                        lightGallery(galleryDiv, {
-                            plugins: [lgVideo],
-                        });
+                        if (downloadLinksDiv.children.length > 0) {
+                            contentDiv.appendChild(downloadLinksDiv);
+                        }
                     }
                 });
         }

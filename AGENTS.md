@@ -29,3 +29,23 @@
         - `lightgallery` ID를 가진 `<div>`를 생성했습니다.
         - 각 비디오 첨부 파일에 대해, `lightGallery`의 요구 사항에 따라 비디오 파일을 가리키는 `href`를 가진 `<a>` 태그와 그 안에 `<img>` 태그를 생성했습니다.
         - 비디오 플러그인을 활성화하여 `#lightgallery` div에 `lightGallery`를 초기화했습니다.
+
+## 갤러리 기능 개선 및 공통화
+
+- **요구사항:**
+    - `lightGallery` 구현을 `index.html`로 이동하여 모든 노트에 공통으로 적용.
+    - 동영상은 갤러리 내에서 재생.
+    - 이미지가 아닌 파일은 다운로드 링크로 제공.
+    - 각 파일 형식에 맞는 아이콘 썸네일 사용.
+
+- **작업 내용:**
+    1.  **기존 구현 제거:** `내 노트 (1)/제목 없는 노트.html`에 추가했던 `lightGallery` 관련 코드를 모두 삭제.
+    2.  **공통 CSS/JS 추가:**
+        - `index.html`의 `<head>`에 `lightGallery` 및 `file-icon-vectors` CSS CDN 링크를 추가.
+        - `index.html`의 `<body>` 끝에 `lightGallery` 및 비디오 플러그인 JS CDN 링크를 추가.
+    3.  **`showFileContent` 함수 수정:**
+        - `attach_file.json`을 fetch하여 현재 노트의 첨부 파일 정보를 가져오도록 수정.
+        - 첨부 파일을 이미지, 동영상, 기타 파일로 분류.
+        - 이미지와 동영상은 `lightGallery` 아이템으로 동적 생성.
+        - 기타 파일은 `file-icon-vectors` 아이콘을 사용하여 다운로드 링크로 동적 생성.
+    4.  **스타일 추가:** 갤러리 썸네일, 다운로드 링크, 파일 아이콘에 대한 CSS 스타일을 `index.html`에 추가.
