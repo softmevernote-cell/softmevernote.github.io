@@ -191,28 +191,32 @@
 
         function searchFiles() {
             const input = document.getElementById('searchInput');
-            const filter = input.value.toLowerCase();
+            const filter = input.value;
             const keywords = filter.split(' ').filter(k => k);
             const ul = document.getElementById('files');
             const li = ul.getElementsByTagName('li');
 
             for (let i = 0; i < li.length; i++) {
-                const txtValue = li[i].textContent || li[i].innerText;
-                let match = false;
+                if (!li[i].dataset.originalText) {
+                    li[i].dataset.originalText = li[i].textContent;
+                }
+                const originalText = li[i].dataset.originalText;
+
                 if (keywords.length === 0) {
-                    match = true;
-                } else {
-                    for (const keyword of keywords) {
-                        if (txtValue.toLowerCase().includes(keyword)) {
-                            match = true;
-                            break;
-                        }
-                    }
+                    li[i].innerHTML = originalText;
+                    li[i].style.display = "";
+                    continue;
                 }
 
-                if (match) {
+                const regex = new RegExp(keywords.map(k => k.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|'), 'gi');
+                const hasMatch = regex.test(originalText);
+
+                if (hasMatch) {
+                    const highlightedText = originalText.replace(regex, (match) => `<mark>${match}</mark>`);
+                    li[i].innerHTML = highlightedText;
                     li[i].style.display = "";
                 } else {
+                    li[i].innerHTML = originalText;
                     li[i].style.display = "none";
                 }
             }
