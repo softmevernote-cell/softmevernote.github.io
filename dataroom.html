@@ -117,14 +117,14 @@
 
             let allFiles = [];
 
-            fetch('attach_file.json')
+            fetch('files_info.json')
                 .then(response => response.json())
                 .then(data => {
                     for (const htmlFile in data) {
-                        const attachments = data[htmlFile];
-                        attachments.files.forEach(file => {
+                        const htmlInfo = data[htmlFile];
+                        htmlInfo.files.forEach(file => {
                             allFiles.push({
-                                html_file: htmlFile,
+                                html_file: htmlInfo.html_file ,
                                 filename: file
                             });
                         });
@@ -132,7 +132,7 @@
 
                     const galleryItems = allFiles
                         .filter(f => ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'webm'].includes(f.filename.split('.').pop().toLowerCase()))
-                        .map(f => ({'src': encodeURI(f.html_file.replace('.html', ' files/') + f.filename)}));
+                        .map(f => ({'src': encodeURI(f.html_file.replace('.html', ' files/') + " files/" + f.filename)}));
                     
                     const lg = lightGallery(galleryContainer, {
                         dynamic: true,
@@ -144,7 +144,7 @@
                         fileList.innerHTML = '';
                         filesToRender.forEach(fileData => {
                             const li = document.createElement('li');
-                            const filePath = fileData.html_file.replace('.html', ' files/') + fileData.filename;
+                            const filePath = fileData.html_file.replace('.html', ' files/') + " files/" + fileData.filename;
                             const fileExt = fileData.filename.split('.').pop().toLowerCase();
 
                             let thumbnail;
@@ -173,6 +173,7 @@
                                 attachFileLink.onclick = (e) => {
                                     e.preventDefault();
                                     const clickedSrc = e.target.dataset.src;
+                                    debugger;
                                     const galleryIndex = galleryItems.findIndex(item => item.src === clickedSrc);
                                     if (galleryIndex !== -1) {
                                         lg.openGallery(galleryIndex);

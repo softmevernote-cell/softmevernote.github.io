@@ -84,7 +84,7 @@
         let filesData = [];
 
         document.addEventListener("DOMContentLoaded", function() {
-            fetch('files.json')
+            fetch('files_info.json')
                 .then(response => response.json())
                 .then(data => {
                     filesData = data;
@@ -120,28 +120,22 @@
             const contentDiv = document.getElementById('content');
             contentDiv.innerHTML = '';
             const fileData = filesData[index];
-
             // Display HTML content
             const iframe = document.createElement('iframe');
             iframe.style.width = '100%';
             iframe.style.height = '400px';
             iframe.style.border = '1px solid #ccc';
-            iframe.src = encodeURI(fileData.html_file);
+            iframe.src = encodeURI(fileData.html_file+".html");
             contentDiv.appendChild(iframe);
-
-            // Create gallery and download links
-            fetch('attach_file.json')
-                .then(response => response.json())
-                .then(attachData => {
-                    if (attachData[fileData.html_file]) {
-                        const attachments = attachData[fileData.html_file];
+            // debugger;
+            const attachData = filesData.filter(item=>item.html_file==fileData.html_file)[0];
+                    if (attachData) {
                         const galleryDiv = document.createElement('div');
                         galleryDiv.id = 'lightgallery';
                         const downloadLinksDiv = document.createElement('div');
                         downloadLinksDiv.id = 'download-links';
-
-                        attachments.files.forEach(file => {
-                            const filePath = fileData.html_file.replace('.html', ' files/') + file;
+                        attachData.files.forEach(file => {
+                            const filePath = fileData.html_file.replace('.html', ' files/') + " files/" + file;
                             const fileExt = file.split('.').pop().toLowerCase();
 
                             if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
@@ -186,7 +180,7 @@
                             contentDiv.appendChild(downloadLinksDiv);
                         }
                     }
-                });
+     
         }
 
         function searchFiles() {
