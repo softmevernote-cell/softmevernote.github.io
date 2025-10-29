@@ -1,9 +1,0 @@
-[01/29,13:06:41] -----------------------------------------------------------------------
-[01/29,13:06:41] - MpeonAutoUpdater Log Start by kys Ver 2.0.0.2
-[01/29,13:06:41] -----------------------------------------------------------------------
-[01/29,13:06:41] OnTimer] TIMERID_STEP1_1 , ProcessStep1_2
-[01/29,13:06:41] ##### USER_OS_WINDOWS_XP
-[01/29,13:06:41] RegOpenKeyEx ±â µî·Ï
-[01/29,13:06:41] CMPEONAutoUpdaterDlg::ProcessStep1_2
-[01/29,13:06:41] CMPEONAutoUpdaterDlg::GetUpdateInfo
-[01/29,13:06:41] CMPEONAutoUpdaterDlg::GetUpdateInfo() AutoUpdate.exe Not Exist in SD Card
