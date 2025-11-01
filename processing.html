@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>processing.html</title>
+<style>
+  :root { --card:#f6f6f6; --bd:#eaeaea; }
+  * { box-sizing: border-box; }
+  body{font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", Arial, "Helvetica Neue", Helvetica, "Apple Color Emoji","Segoe UI Emoji", "Segoe UI Symbol"; 
+       padding:12px; margin:0; color:#111;}
+  header.toolbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px;}
+  select,button,input{padding:8px 10px; border:1px solid var(--bd); border-radius:8px; background:white;}
+  button{cursor:pointer}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .card{background:var(--card); border:1px solid var(--bd); border-radius:12px; padding:10px;}
+  pre{background:white; border:1px dashed var(--bd); padding:8px; border-radius:8px; max-height:300px; overflow:auto;}
+  .muted{opacity:.7}
+</style>
+</head>
+<body>
+<h2 style="margin:0 0 8px 0;">Processing — content_index.json 전처리/인덱싱</h2>
+<header class="toolbar">
+  <label>데이터셋
+    <select id="dataset">
+      <option value="data/content_index.json">data/content_index.json</option>
+      <option value="data/content_index_alt1.json">data/content_index_alt1.json</option>
+      <option value="data/content_index_alt2.json">data/content_index_alt2.json</option>
+      <option value="data/content_index_alt3.json">data/content_index_alt3.json</option>
+    </select>
+  </label>
+  <button id="btnLoad">로드</button>
+  <button id="btnIndex">인덱스 빌드</button>
+  <button id="btnExport">전처리 JSON 내보내기</button>
+  <span class="muted">TIP: 이 페이지는 이벤트를 발행하고, dashboard.html이 이를 구독해 시각화할 수 있습니다.</span>
+</header>
+
+<div class="grid">
+  <div class="card">
+    <h3>요약</h3>
+    <div id="summary">데이터를 로드해 주세요.</div>
+  </div>
+  <div class="card">
+    <h3>미리보기(Top Tokens or Hits)</h3>
+    <pre id="preview"></pre>
+  </div>
+  <div class="card">
+    <h3>최근 이벤트 로그</h3>
+    <pre id="log"></pre>
+  </div>
+  <div class="card">
+    <h3>내보내기 설명</h3>
+    <p>버튼을 누르면 현재 레코드/토큰 통계를 포함한 <code>processed_dataset.json</code>을 다운로드합니다.</p>
+    <ul>
+      <li>records: 원본 레코드에서 내부 필드 제거</li>
+      <li>tokens: 전역 Top-N 토큰 목록</li>
+      <li>byYear: 연도별 문서 수</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  // ============== 1) 글로벌 이벤트 버스 ==============
+  window.dataBus = new EventTarget();
+  window.emit = (name, detail={}) => {
+    dataBus.dispatchEvent(new CustomEvent(name, { detail }));
+    log(`[emit] ${name} ` + JSON.stringify(detail).slice(0, 200));
+  };
+  window.on = (name, handler) => dataBus.addEventListener(name, handler);
+
+  function log(msg){
+    const el = document.getElementById("log");
+    el.textContent = (msg + "\\n" + el.textContent).slice(0, 5000);
+  }
+
+  // ============== 2) 유틸 ==============
+  function parseDate(d) {
+    if (!d) return null;
+    const m = /^(\d{4})(?:-(\d{2})-(\d{2}))?$/.exec(d);
+    if (!m) return null;
+    const y = +m[1], mo = +(m[2]||"01"), da = +(m[3]||"01");
+    return new Date(y, mo-1, da);
+  }
+
+  function buildTokens(r){
+    const t = new Set([
+      ...(r.keywords_combined||[]),
+      ...(r.keywords_name||[]),
+      ...(r.keywords_html||[]),
+      ...(r.keywords_attach||[])
+    ].map(x=>String(x).toLowerCase()));
+    return Array.from(t);
+  }
+
+  function groupByYear(records){
+    const map = new Map();
+    for(const r of records){
+      const y = r._date?.getFullYear?.() || "unknown";
+      map.set(y, (map.get(y)||0)+1);
+    }
+    return Object.fromEntries(map);
+  }
+
+  function intersect(a,b){ const out=new Set(); for(const x of a) if(b.has(x)) out.add(x); return out; }
+
+  // ============== 3) 데이터 로더 ==============
+  async function loadContentIndex(url) {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error("load failed: " + res.status);
+    const raw = await res.json();
+    const records = raw.map((r, i) => ({
+      id: i,
+      ...r,
+      _date: parseDate(r.date),
+      _tokens: buildTokens(r)
+    }));
+    const stats = {
+      count: records.length,
+      byYear: groupByYear(records),
+      vocabSize: new Set(records.flatMap(r => r._tokens)).size
+    };
+    emit("data:loaded", { raw, records, stats });
+    return { raw, records, stats };
+  }
+
+  // ============== 4) 인덱서(간단 역색인) ==============
+  function buildSearchIndex(records){
+    const inverted = new Map();
+    const docmap = new Map(records.map(r=>[r.id,r]));
+    for(const r of records){
+      for(const tok of r._tokens){
+        if(!inverted.has(tok)) inverted.set(tok, new Set());
+        inverted.get(tok).add(r.id);
+      }
+    }
+    const vocab = Array.from(inverted.keys());
+    const index = {
+      search(q){
+        const qs = String(q||"").toLowerCase().trim().split(/\\s+/).filter(Boolean);
+        if(qs.length===0) return [];
+        let ids = null;
+        for(const term of qs){
+          const set = inverted.get(term);
+          if(!set){ ids = new Set(); break; }
+          ids = ids ? intersect(ids, set) : new Set(set);
+        }
+        return Array.from(ids||[]).map(id=>docmap.get(id));
+      }
+    };
+    emit("data:indexed", { index, vocab, docmap });
+    return { index, vocab, docmap };
+  }
+
+  // ============== 5) 파생 계산들 ==============
+  function computeWordCloud(records, topN=200){
+    const cnt = new Map();
+    for(const r of records){
+      for(const t of r._tokens) cnt.set(t, (cnt.get(t)||0)+1);
+    }
+    const arr = Array.from(cnt.entries()).sort((a,b)=>b[1]-a[1]).slice(0,topN);
+    emit("cloud:update", { tokens: arr, mode: "global" });
+    return arr;
+  }
+
+  function computeGraph(records){
+    const nodeCnt = new Map(), edgeCnt = new Map();
+    for(const r of records){
+      const toks = Array.from(new Set(r._tokens));
+      toks.forEach(t=>nodeCnt.set(t,(nodeCnt.get(t)||0)+1));
+      for(let i=0;i<toks.length;i++){
+        for(let j=i+1;j<toks.length;j++){
+          const a=toks[i], b=toks[j];
+          const key = a<b ? a+"|"+b : b+"|"+a;
+          edgeCnt.set(key,(edgeCnt.get(key)||0)+1);
+        }
+      }
+    }
+    const nodes = Array.from(nodeCnt,([id,weight])=>({ id, label:id, size: weight }));
+    const edges = Array.from(edgeCnt,([k,w])=>{const [a,b]=k.split("|"); return { source:a, target:b, weight:w }}).filter(e=>e.weight>=2);
+    emit("graph:update", { nodes, edges, meta:{mode:"cooccur"} });
+    return { nodes, edges };
+  }
+
+  function computeTimeline(records){
+    const items = records.filter(r=>r._date).map(r=>({ id:r.id, content:r.html_file, start:r._date.toISOString().slice(0,10) }));
+    const groups = [];
+    emit("timeline:update", { items, groups });
+    return { items, groups };
+  }
+
+  // ============== 6) UI 배선 ==============
+  const $dataset = document.getElementById('dataset');
+  const $btnLoad = document.getElementById('btnLoad');
+  const $btnIndex = document.getElementById('btnIndex');
+  const $btnExport = document.getElementById('btnExport');
+  const $summary = document.getElementById('summary');
+  const $preview = document.getElementById('preview');
+
+  let g = { raw:null, records:[], stats:null, index:null };
+
+  $btnLoad.onclick = async () => {
+    const url = $dataset.value;
+    const { raw, records, stats } = await loadContentIndex(url);
+    g.raw = raw; g.records = records; g.stats = stats;
+    $summary.innerHTML = `레코드: <b>${stats.count}</b>, 어휘수: <b>${stats.vocabSize}</b>, 연도별: <code>${JSON.stringify(stats.byYear)}</code>`;
+    const topCloud = computeWordCloud(records, 50);
+    $preview.textContent = JSON.stringify(topCloud, null, 2);
+    computeGraph(records);
+    computeTimeline(records);
+  };
+
+  $btnIndex.onclick = () => {
+    const { index } = buildSearchIndex(g.records);
+    g.index = index;
+    const hits = index.search("android camera");
+    emit("search:result", { q:"android camera", hits });
+    $preview.textContent = JSON.stringify(hits.slice(0,5), null, 2);
+  };
+
+  $btnExport.onclick = () => {
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      records: g.records.map(({_tokens,_date, ...r})=>r),
+      tokens: computeWordCloud(g.records, 200),
+      byYear: g.stats?.byYear || {}
+    };
+    const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "processed_dataset.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+</script>
+</body>
+</html>

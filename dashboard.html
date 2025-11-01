@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>dashboard.html</title>
+<link rel="stylesheet" href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css">
+<style>
+  :root { --card:#f6f6f6; --bd:#eaeaea; }
+  *{box-sizing:border-box}
+  body{font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", Arial, "Helvetica Neue", Helvetica; margin:0; color:#111;
+       display:grid; grid-template-rows:auto 1fr; height:100vh;}
+  header{display:flex; gap:8px; align-items:center; padding:10px 12px; border-bottom:1px solid var(--bd);}
+  select,button,input{padding:8px 10px; border:1px solid var(--bd); border-radius:8px; background:white;}
+  main{display:grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap:10px; padding:10px;}
+  .panel{border:1px solid var(--bd); background:var(--card); border-radius:12px; padding:10px; overflow:hidden; display:flex; flex-direction:column; min-height:220px;}
+  #cloud,#graph,#timeline{flex:1; min-height:260px;}
+  #results{flex:1; overflow:auto; white-space:pre-wrap; background:white; border-radius:8px; padding:8px;}
+</style>
+</head>
+<body>
+<header>
+  <label>데이터셋
+    <select id="dataset">
+      <option value="data/content_index.json">data/content_index.json</option>
+      <option value="data/content_index_alt1.json">data/content_index_alt1.json</option>
+    </select>
+  </label>
+  <input id="q" placeholder="검색어(스페이스 AND)" style="flex:1;"/>
+  <button id="btnSearch">검색</button>
+</header>
+
+<main>
+  <div class="panel">
+    <b>단어클라우드</b>
+    <div id="cloud"></div>
+  </div>
+  <div class="panel">
+    <b>지식그래프</b>
+    <div id="graph"></div>
+  </div>
+  <div class="panel">
+    <b>타임라인</b>
+    <div id="timeline"></div>
+  </div>
+  <div class="panel">
+    <b>검색 결과</b>
+    <div id="results"></div>
+  </div>
+</main>
+
+<!-- libs -->
+<script src="https://unpkg.com/d3@7"></script>
+<script src="https://unpkg.com/d3-cloud/build/d3.layout.cloud.js"></script>
+<script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
+<script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
+
+<script>
+  // ===== 이벤트 버스 (processing.html과 공유 가능) =====
+  window.dataBus = window.dataBus || new EventTarget();
+  window.emit = window.emit || ((n,d={})=>dataBus.dispatchEvent(new CustomEvent(n,{detail:d})));
+  window.on = window.on || ((n,h)=>dataBus.addEventListener(n,h));
+
+  // ===== 공통 유틸 =====
+  function parseDate(d){ if(!d) return null; const m=/^(\\d{4})(?:-(\\d{2})-(\\d{2}))?$/.exec(d); if(!m) return null; return new Date(+m[1], +(m[2]||"01")-1, +(m[3]||"01")); }
+  function buildTokens(r){
+    const t = new Set([...(r.keywords_combined||[]), ...(r.keywords_name||[]), ...(r.keywords_html||[]), ...(r.keywords_attach||[])].map(x=>String(x).toLowerCase()));
+    return Array.from(t);
+  }
+  function topTokens(records, N=150){
+    const m=new Map(); for(const r of records) for(const t of r._tokens) m.set(t,(m.get(t)||0)+1);
+    return Array.from(m.entries()).sort((a,b)=>b[1]-a[1]).slice(0,N);
+  }
+  function computeGraph(records){
+    const nodeCnt=new Map(), edgeCnt=new Map();
+    for(const r of records){
+      const toks=Array.from(new Set(r._tokens));
+      toks.forEach(t=>nodeCnt.set(t,(nodeCnt.get(t)||0)+1));
+      for(let i=0;i<toks.length;i++) for(let j=i+1;j<toks.length;j++){
+        const a=toks[i], b=toks[j]; const k=a<b?`${a}|${b}`:`${b}|${a}`;
+        edgeCnt.set(k,(edgeCnt.get(k)||0)+1);
+      }
+    }
+    const nodes=Array.from(nodeCnt,([id,w])=>({id,label:id,size:w}));
+    const edges=Array.from(edgeCnt,([k,w])=>{const [a,b]=k.split("|"); return {source:a,target:b,weight:w}}).filter(e=>e.weight>=2);
+    return { nodes, edges, meta:{} };
+  }
+  function computeTimeline(records){
+    return { items: records.filter(r=>r._date).map(r=>({id:r.id, content:r.html_file, start:r._date})), groups: [] };
+  }
+  function buildIndex(records){
+    const inverted=new Map(), docmap=new Map(records.map(r=>[r.id,r]));
+    for(const r of records){ for(const t of r._tokens){ if(!inverted.has(t)) inverted.set(t,new Set()); inverted.get(t).add(r.id); } }
+    return {
+      index:{ search(q){ const qs=String(q||"").toLowerCase().trim().split(/\\s+/).filter(Boolean); if(!qs.length) return [];
+        let ids=null; for(const term of qs){ const set=inverted.get(term); if(!set){ids=new Set(); break;} ids=ids? new Set([...ids].filter(x=>set.has(x))) : new Set(set); }
+        return Array.from(ids||[]).map(id=>docmap.get(id)); } },
+      vocab:Array.from(inverted.keys()), docmap
+    };
+  }
+
+  // ===== UI =====
+  const $dataset = document.getElementById('dataset');
+  const $q = document.getElementById('q');
+  const $btnSearch = document.getElementById('btnSearch');
+  const $results = document.getElementById('results');
+
+  let cy = null;
+  let timeline = null;
+  let searchAPI = null;
+  let currentRecords = [];
+
+  // processing.html이 로드/인덱스 결과를 브로드캐스트하면 구독
+  on("data:loaded", e => {
+    const { records } = e.detail;
+    currentRecords = records;
+    // 기본 파생들 렌더
+    drawCloud(topTokens(records));
+    drawGraph(computeGraph(records));
+    drawTimeline(computeTimeline(records));
+    // 인덱스 생성
+    const { index } = buildIndex(records);
+    searchAPI = index;
+  });
+
+  // 직접 로드(대시보드 단독 실행 대비)
+  async function loadContentIndex(url){
+    const res = await fetch(url, {cache:"no-store"});
+    const raw = await res.json();
+    const records = raw.map((r,i)=>({...r, id:i, _date:parseDate(r.date), _tokens:buildTokens(r)}));
+    emit("data:loaded", { raw, records, stats:{count:records.length}});
+  }
+
+  // 검색
+  $btnSearch.onclick = () => {
+    const q = $q.value;
+    emit("search:query", { q });
+    const hits = searchAPI ? searchAPI.search(q) : [];
+    emit("search:result", { q, hits });
+    renderHits(hits);
+    // 부분집합 기반 재시각화
+    const ids = new Set(hits.map(h=>h.id));
+    const subset = currentRecords.filter(r=>ids.has(r.id));
+    drawCloud(topTokens(subset));
+    drawGraph(computeGraph(subset));
+    drawTimeline(computeTimeline(subset));
+  };
+
+  function renderHits(hits){
+    $results.innerHTML = hits.slice(0,80).map(h =>
+      `<div>
+        <b>${h.html_file}</b><br/>
+        <small>${h.folder||''} · ${h.date||''}</small><br/>
+        <code>${(h.keywords_combined||[]).slice(0,12).join(", ")}</code>
+      </div><hr/>`
+    ).join("");
+  }
+
+  // 워드클라우드 (d3-cloud)
+  function drawCloud(entries){
+    const el = document.querySelector("#cloud");
+    el.innerHTML = "";
+    const w = el.clientWidth || 400, h = el.clientHeight || 300;
+    const data = entries.map(([text, freq])=>({text, size: Math.max(12, Math.min(60, freq*3))}));
+    const layout = d3.layout.cloud().size([w,h]).words(data).padding(2).rotate(()=>0).fontSize(d=>d.size).on("end", draw);
+    layout.start();
+    function draw(words){
+      const svg = d3.select("#cloud").append("svg").attr("width",w).attr("height",h).append("g").attr("transform",`translate(${w/2},${h/2})`);
+      svg.selectAll("text").data(words).enter().append("text")
+        .style("font-size", d=>d.size+"px").attr("text-anchor","middle")
+        .attr("transform", d=>`translate(${[d.x,d.y]})rotate(${d.rotate})`)
+        .text(d=>d.text).on("click",(evt,d)=> { $q.value = d.text; $btnSearch.click(); });
+    }
+  }
+
+  // 지식그래프 (cytoscape)
+  function drawGraph(g){
+    const nodes = g.nodes.map(n=>({ data:{ id:n.id, label:n.label, size:n.size } }));
+    const edges = g.edges.map(ed=>({ data:{ id: ed.source+"_"+ed.target, source: ed.source, target: ed.target, weight: ed.weight } }));
+    if(!cy){
+      cy = cytoscape({
+        container: document.getElementById('graph'),
+        elements: { nodes, edges },
+        style: [
+          { selector: 'node', style: { 'label':'data(label)', 'width':'mapData(size,1,50,10,50)', 'height':'mapData(size,1,50,10,50)', 'font-size':'10px'} },
+          { selector: 'edge', style: { 'line-color':'#bbb', 'width':'mapData(weight,1,10,1,6)' } }
+        ],
+        layout: { name:'cose', animate:false }
+      });
+      cy.on('tap','node',(evt)=> { $q.value = evt.target.id(); $btnSearch.click(); });
+    } else {
+      cy.json({ elements:{ nodes, edges } });
+      cy.layout({ name:'cose', animate:false }).run();
+    }
+  }
+
+  // 타임라인 (vis-timeline)
+  function drawTimeline(tl){
+    const container = document.getElementById('timeline');
+    container.innerHTML = "";
+    const dataset = new vis.DataSet(tl.items);
+    const options = { height: "100%", zoomMin: 1000*60*60*24*7, zoomMax: 1000*60*60*24*365*10 };
+    timeline = new vis.Timeline(container, dataset, options);
+  }
+
+  // 초기 자동 로드
+  window.addEventListener("DOMContentLoaded", () => {
+    loadContentIndex($dataset.value);
+  });
+  $dataset.addEventListener("change", () => loadContentIndex($dataset.value));
+</script>
+</body>
+</html>

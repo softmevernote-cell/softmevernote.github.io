@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/content_index.schema.json",
+  "title": "content_index.json",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "html_file",
+      "folder",
+      "attachments",
+      "source"
+    ],
+    "properties": {
+      "html_file": {
+        "type": "string",
+        "description": "원본 HTML 파일의 (확장자 없는) 경로 또는 식별자"
+      },
+      "folder": {
+        "type": "string",
+        "description": "상위 폴더 경로 또는 라벨"
+      },
+      "date": {
+        "type": "string",
+        "description": "YYYY 또는 YYYY-MM-DD",
+        "pattern": "^(19|20)\\d\\d(-\\d\\d-\\d\\d)?$"
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": []
+      },
+      "subtags": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": []
+      },
+      "summary": {
+        "type": "string"
+      },
+      "keywords_name": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": []
+      },
+      "keywords_html": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": []
+      },
+      "keywords_attach": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": []
+      },
+      "keywords_combined": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": []
+      },
+      "attachments": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "filename",
+            "type",
+            "keywords"
+          ],
+          "properties": {
+            "filename": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "description": "파일 유형, 확장자 기반",
+              "enum": [
+                "pdf",
+                "docx",
+                "doc",
+                "text",
+                "md",
+                "csv",
+                "tsv",
+                "json",
+                "image",
+                "jpg",
+                "jpeg",
+                "png",
+                "gif",
+                "bmp",
+                "webp",
+                "tiff",
+                "sheet",
+                "xlsx",
+                "xls",
+                "zip",
+                "mhtml",
+                "html",
+                "htm",
+                "hwp",
+                "hwpx",
+                "file"
+              ]
+            },
+            "keywords": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "text_ref": {
+              "type": "string",
+              "description": "텍스트 캐시 파일 경로",
+              "nullable": true
+            }
+          }
+        },
+        "default": []
+      },
+      "html_text_ref": {
+        "type": "string",
+        "description": "HTML 텍스트 캐시 파일 경로",
+        "nullable": true
+      },
+      "source": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "html_path",
+          "files_dir"
+        ],
+        "properties": {
+          "html_path": {
+            "type": "string"
+          },
+          "files_dir": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    [
+      {
+        "html_file": "내 노트 (24)/Erwin macro manual",
+        "folder": "내 노트 (24)",
+        "date": "2013-02-21",
+        "tags": [
+          "tech/dev"
+        ],
+        "subtags": [
+          "has_pdf"
+        ],
+        "summary": "Erwin 매크로 코드 및 참조 매뉴얼 요약...",
+        "keywords_name": [
+          "erwin",
+          "macro",
+          "manual"
+        ],
+        "keywords_html": [],
+        "keywords_attach": [
+          "macro",
+          "pdf",
+          "guide"
+        ],
+        "keywords_combined": [
+          "erwin",
+          "macro",
+          "guide"
+        ],
+        "attachments": [
+          {
+            "filename": "ERwin_Macro_Code.pdf",
+            "type": "pdf",
+            "keywords": [
+              "macro",
+              "code",
+              "pdf"
+            ],
+            "text_ref": "text_cache/Erwin__ERwin_Macro_Code_att.txt"
+          }
+        ],
+        "html_text_ref": null,
+        "source": {
+          "html_path": "내 노트 (24)/Erwin macro manual.html",
+          "files_dir": "내 노트 (24)/Erwin macro manual files/"
+        }
+      }
+    ]
+  ]
+}
