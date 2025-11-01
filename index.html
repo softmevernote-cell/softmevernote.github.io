@@ -80,8 +80,10 @@
         </div>
     </div>
 
+    <script src="lib/attachment-utils.js"></script>
     <script>
         let filesData = [];
+        const { buildAttachmentUrl } = AttachmentUtils;
 
         document.addEventListener("DOMContentLoaded", function() {
             fetch('files_info.json')
@@ -128,58 +130,55 @@
             iframe.src = encodeURI(fileData.html_file+".html");
             contentDiv.appendChild(iframe);
             // debugger;
-            const attachData = filesData.filter(item=>item.html_file==fileData.html_file)[0];
-                    if (attachData) {
-                        const galleryDiv = document.createElement('div');
-                        galleryDiv.id = 'lightgallery';
-                        const downloadLinksDiv = document.createElement('div');
-                        downloadLinksDiv.id = 'download-links';
-                        attachData.files.forEach(file => {
-                            const filePath = fileData.html_file.replace('.html', ' files/') + " files/" + file;
-                            const fileExt = file.split('.').pop().toLowerCase();
+            const attachments = Array.isArray(fileData.files) ? fileData.files : [];
+            if (attachments.length > 0) {
+                const galleryDiv = document.createElement('div');
+                galleryDiv.id = 'lightgallery';
+                const downloadLinksDiv = document.createElement('div');
+                downloadLinksDiv.id = 'download-links';
+                attachments.forEach(file => {
+                    const fileUrl = buildAttachmentUrl(fileData, file);
+                    const fileExt = (file.split('.').pop() || '').toLowerCase();
 
-                            if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
-                                // Image for lightGallery
-                                const a = document.createElement('a');
-                                a.href = encodeURI(filePath);
-                                const img = document.createElement('img');
-                                img.src = encodeURI(filePath);
-                                a.appendChild(img);
-                                galleryDiv.appendChild(a);
-                            } else if (['mp4', 'mov', 'webm'].includes(fileExt)) {
-                                // Video for lightGallery
-                                const a = document.createElement('a');
-                                a.href = encodeURI(filePath);
-                                const img = document.createElement('img');
-                                img.src = 'https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/images/video-play.png';
-                                a.appendChild(img);
-                                galleryDiv.appendChild(a);
-                            } else {
-                                // Download link for other files
-                                const p = document.createElement('p');
-                                const a = document.createElement('a');
-                                a.href = encodeURI(filePath);
-                                a.download = file;
-                                const icon = document.createElement('span');
-                                icon.className = `fiv-cla fiv-icon-${fileExt}`;
-                                a.appendChild(icon);
-                                a.appendChild(document.createTextNode(` ${file}`));
-                                p.appendChild(a);
-                                downloadLinksDiv.appendChild(p);
-                            }
-                        });
-
-                        if (galleryDiv.children.length > 0) {
-                            contentDiv.appendChild(galleryDiv);
-                            lightGallery(galleryDiv, {
-                                plugins: [lgVideo],
-                            });
-                        }
-
-                        if (downloadLinksDiv.children.length > 0) {
-                            contentDiv.appendChild(downloadLinksDiv);
-                        }
+                    if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+                        const a = document.createElement('a');
+                        a.href = fileUrl;
+                        const img = document.createElement('img');
+                        img.src = fileUrl;
+                        a.appendChild(img);
+                        galleryDiv.appendChild(a);
+                    } else if (['mp4', 'mov', 'webm'].includes(fileExt)) {
+                        const a = document.createElement('a');
+                        a.href = fileUrl;
+                        const img = document.createElement('img');
+                        img.src = 'https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/images/video-play.png';
+                        a.appendChild(img);
+                        galleryDiv.appendChild(a);
+                    } else {
+                        const p = document.createElement('p');
+                        const a = document.createElement('a');
+                        a.href = fileUrl;
+                        a.download = file;
+                        const icon = document.createElement('span');
+                        icon.className = `fiv-cla fiv-icon-${fileExt}`;
+                        a.appendChild(icon);
+                        a.appendChild(document.createTextNode(` ${file}`));
+                        p.appendChild(a);
+                        downloadLinksDiv.appendChild(p);
                     }
+                });
+
+                if (galleryDiv.children.length > 0) {
+                    contentDiv.appendChild(galleryDiv);
+                    lightGallery(galleryDiv, {
+                        plugins: [lgVideo],
+                    });
+                }
+
+                if (downloadLinksDiv.children.length > 0) {
+                    contentDiv.appendChild(downloadLinksDiv);
+                }
+            }
      
         }
 
